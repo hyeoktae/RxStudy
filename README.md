@@ -186,4 +186,76 @@ filter를 먼저하면 2,4,6,8 이고, take를 먼저하면 2,4 가 나온다.
 옵저버는 하나의 옵저버블만 구독하고, 마찬가지로 옵저버블도 하나의 옵저버에 값을 전달할수있다.
 옵저버인 동시에 옵저버블이다. 
 
+publishSubject: 서브젝트로 전달되는 새로운 이벤트를 구독자에게 전달한다.
+BehaviorSubject: 생성시점에 시작이벤트를 지정한다. 서브젝트로 전달되는 이벤트중에 가장마지막의 이벤트를 저장했다가, 새로운 구독자에게 마지막에 저장된 이벤트를 준다.
+ReplaySubject: 처음부터 모든 이벤트를 저장한다. 그러고 새로운 구독자가 나타나면 저장했던 모든 이벤트를 준다.
+AsyncSubject: subject로 completed가 전달되는 시점에 마지막 이벤트를 구독자에게 전달한다.
 
+PublishRelay: PublishSubject를 랩핑한것
+BehaviorRelay: BehaviorSubject를 랩핑한것
+Relay는 completed, error는 받지 않고, next 이벤트만 받는다.
+주로 종료없이 계속 전달되는 이벤트 시퀀스를 다룰때 사용한다. 
+
+### PublishSubject
+서브젝트로 전달되는 이벤트를 옵저버에 전달하는 가장 기본적인 subject이다.
+
+```swift
+let disposeBag = DisposeBag()
+
+enum MyError: Error {
+   case error
+}
+
+let subject = PublishSubject<String>() // 내부에 아무런 이벤트가 없다.
+
+subject.onNext("Hello") // 구독자가 없으면 이 이벤트는 그냥 사라진다.
+
+let o1 = subject.subscribe { print(">> 1", $0) }
+o1.disposed(by: disposeBag) // 구독하기 전 이벤트는 아무소용이 없다. publish는 (저장안해서)
+
+subject.onNext("RxSwift")
+
+let o2 = subject.subscribe { print(">> 2", $0) }
+o2.disposed(by: disposeBag)
+
+subject.onNext("Subject")
+
+//subject.onCompleted()
+subject.onError(MyError.error)
+
+let o3 = subject.subscribe { print(">> 3", $0) } // 이미 completed가 되었기때문에 (종료됨) 바로 completed가 된다.
+o3.disposed(by: disposeBag) // 이 전에 error가 나왔기때문에 바로 error가 된다.
+// 만약 이전의 이벤트들을 저장하고 싶으면, replays 나 cold observable을 사용해야한다.
+```
+
+### BehaviorSubject
+
+```swift
+let disposeBag = DisposeBag()
+
+enum MyError: Error {
+   case error
+}
+
+// publish랑 비슷하지만, 서브젝트를 생성하는 방식에 차이가 있다.
+
+let p = PublishSubject<Int>() // 이벤트가 없는채로 생성
+p.subscribe { print("PublishSubject >>", $0) }
+  .disposed(by: disposeBag)
+
+let b = BehaviorSubject<Int>(value: 0) // 초기이벤트가 있는채로 생성 0인이유는 제네릭타임이 Int로 정해졌기때문이다. 새로운 구독자가 생성되면 바로 저장되어있는 초기 이벤트값이 전달된다.
+b.subscribe { print("BehaviorSubject >>", $0) } // BehaviorSubject >> next(0)
+  .disposed(by: disposeBag)
+
+b.onNext(1)
+ 
+b.subscribe { print("BehaviorSubject2 >>", $0) } // BehaviorSubject >> next(1) 결론적으로 보면 마지막 이벤트를 새로운구독자에게 전달을 하는것.
+  .disposed(by: disposeBag)
+
+//b.onCompleted()
+b.onError(MyError.error)
+
+
+b.subscribe { print("BehaviorSubject3 >>", $0) } // 이미 completed가 되어서(종료) 얘도 바로 completed가 된다. err도 마찮가지이다.
+  .disposed(by: disposeBag)
+```
