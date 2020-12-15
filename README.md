@@ -259,3 +259,98 @@ b.onError(MyError.error)
 b.subscribe { print("BehaviorSubject3 >>", $0) } // 이미 completed가 되어서(종료) 얘도 바로 completed가 된다. err도 마찮가지이다.
   .disposed(by: disposeBag)
 ```
+
+
+### ReplaySubject
+
+```swift
+let disposeBag = DisposeBag()
+
+enum MyError: Error {
+   case error
+}
+
+
+let rs = ReplaySubject<Int>.create(bufferSize: 3) // 3개의 이벤트를 저장하는 버퍼가 생성됨, 버퍼는 메모리를 사용하기 때문에, 필요 이상의 큰 버퍼를 사용하는것은 피해야한다.
+
+(1...10).forEach {
+  rs.onNext($0)
+}
+
+rs.subscribe { print("Observer 1 >>", $0) } // 8,9,10
+  .disposed(by: disposeBag)
+
+rs.subscribe { print("Observer 2 >>", $0) } // 8,9,10
+  .disposed(by: disposeBag)
+
+rs.onNext(11) // 가장 초기의 이벤트가 삭제됨 (버퍼가 3이라) 11, 11
+
+rs.subscribe { print("Observer 3 >>", $0) } // 9,10,11
+  .disposed(by: disposeBag)
+
+//rs.onCompleted()
+rs.onError(MyError.error)
+
+rs.subscribe { print("Observer 4 >>", $0) } // 9,10,11, completed or error
+  .disposed(by: disposeBag)
+
+// replaySubject는 종료와 상관없이 버퍼에 저장되어있는 값을 새로운 구독자에게 전달 후 종료함.
+```
+
+
+### AsyncSubject
+
+```swift
+let bag = DisposeBag()
+
+enum MyError: Error {
+   case error
+}
+
+
+// 서브젝트로 completed가 오기 전까지는 어떤 이벤트로 구독자에게 전달하지 않으나, completed가 오면 가장 마지막의 이벤트를 전달한다.
+
+let subject = AsyncSubject<Int>()
+
+subject.subscribe { print($0) }
+  .disposed(by: bag)
+
+subject.onNext(1)
+
+subject.onNext(2)
+subject.onNext(3)
+
+//subject.onCompleted() // 이러면 3이 방출
+subject.onError(MyError.error) // completed가 아니기 때문에, 에러만나온다.
+```
+
+
+### PublishRelay & BehaviorRelay
+```swift
+let bag = DisposeBag()
+
+
+//  Relay는 Next이벤트만 전달한다. 즉 종료가 안된다. 주로 UI Event처리에 자주 쓰인다.
+// 이건 RxCocoa 에서 제공한다.
+
+let prelay = PublishRelay<Int>()
+
+prelay.subscribe {print("1: \($0)")}
+  .disposed(by: bag)
+
+prelay.accept(1) // onNext가 없다.
+
+
+let bRelay = BehaviorRelay(value: 1)
+bRelay.accept(2)
+
+bRelay.subscribe {
+  print("2: \($0)")
+}
+.disposed(by: bag)
+
+bRelay.accept(3)
+
+print(bRelay.value) // 여기있는 value는 읽기전용이다. 값을 바꾸려면 accept를 통해 바꿔줘야한다.
+```
+
