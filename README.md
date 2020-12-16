@@ -354,3 +354,141 @@ bRelay.accept(3)
 print(bRelay.value) // 여기있는 value는 읽기전용이다. 값을 바꾸려면 accept를 통해 바꿔줘야한다.
 ```
 
+
+## Create Operators
+
+### just & of & from
+
+* just는 단 한번 방출하고 끝난다. 받은 그대로 방출한다.
+* of는 여러개 방출가능하다. 하지만 받은 그대로 방출한다.
+* from은 받은 배열의 요소를 하나씩 방출한다.
+
+just
+```swift
+let disposeBag = DisposeBag()
+let element = "😀"
+
+//just는 한번만 방출한다.
+
+Observable.just(element)
+   .subscribe { event in print(event) }
+   .disposed(by: disposeBag)
+
+Observable.just([1, 2, 3]) // just로 생성한 Observable은 파라미터로 생성산 값 그대로 방출
+   .subscribe { event in print(event) } // [1,2,3]
+   .disposed(by: disposeBag)
+```
+
+of
+```swift
+let disposeBag = DisposeBag()
+let apple = "🍏"
+let orange = "🍊"
+let kiwi = "🥝"
+
+// of는 가변파라미터를 받기 때문에 받은 파라미터의 갯수만큼 방출한다.
+
+Observable.of(apple, orange, kiwi)
+   .subscribe { element in print(element) }
+   .disposed(by: disposeBag)
+
+Observable.of([1, 2], [3, 4], [5, 6]) // 받은 내용 그대로 방출한다.
+   .subscribe { element in print(element) } // [1,2] > [3,4] > [5,6]
+   .disposed(by: disposeBag)
+```
+
+from
+```swift
+let disposeBag = DisposeBag()
+let fruits = ["🍏", "🍎", "🍋", "🍓", "🍇"]
+
+// from은 배열에 포함된 요소를 하나씩 방출한다.
+
+Observable.from(fruits)
+   .subscribe { element in print(element) }
+   .disposed(by: disposeBag)
+```
+
+
+### range & generate
+
+'정수'를 원하는 갯수만큼 방출한다.
+
+range
+```swift
+let disposeBag = DisposeBag()
+
+Observable.range(start: 1, count: 10) // 실수가 오면 안된다.
+   .subscribe { print($0) } // 1부터 1씩 증가하는 10개의 정수를 방출하고 종료
+   .disposed(by: disposeBag) // 증가하는 크기를 바꾸거나 감소하는 시퀀스 생성은 불가하다.
+```
+
+
+generate
+
+```swift
+let disposeBag = DisposeBag()
+let red = "🔴"
+let blue = "🔵"
+
+
+Observable.generate(initialState: 0, condition: { $0 <= 10 }, iterate: { $0 + 2 })
+  .subscribe {print($0)}
+  .disposed(by: disposeBag)
+
+Observable.generate(initialState: 10, condition: { $0 >= 0 }, iterate: { $0 - 2 })
+  .subscribe {print($0)}
+  .disposed(by: disposeBag)
+
+Observable.generate(initialState: red, condition: { $0.count < 15 }) {$0.count.isMultiple(of: 2) ? $0 + red : $0 + blue}
+  .subscribe {print($0)}
+  .disposed(by: disposeBag)
+```
+
+
+### repeatElement
+
+동일한 요소를 반복적으로 방출한다.
+
+```swift
+let disposeBag = DisposeBag()
+let element = "❤️"
+
+// 무한정 같은걸 반복해서 방출한다.
+Observable.repeatElement(element)
+  .take(7) // 계속 나오는데 take를 통해 7개만 받고 종료한다.
+  .subscribe { print($0) }
+  .disposed(by: disposeBag)
+```
+
+### deferred
+
+특정 조건에 따라 옵져버블을 생성
+
+```swift
+let disposeBag = DisposeBag()
+let animals = ["🐶", "🐱", "🐹", "🐰", "🦊", "🐻", "🐯"]
+let fruits = ["🍎", "🍐", "🍋", "🍇", "🍈", "🍓", "🍑"]
+var flag = true
+
+let factory: Observable<String> = Observable.deferred { // Type을 적어주어야한다.
+  flag.toggle()
+  if flag {
+    return Observable.from(animals)
+  } else {
+    return Observable.from(fruits)
+  }
+}
+
+factory.subscribe {print($0)} // 과일방출
+  .disposed(by: disposeBag)
+
+factory.subscribe {print($0)} // 동물방출
+  .disposed(by: disposeBag)
+
+factory.subscribe {print($0)} // 과일방출
+  .disposed(by: disposeBag)
+```
+
+
+
