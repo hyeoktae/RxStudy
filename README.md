@@ -5,7 +5,7 @@ rx를 사용하는 이유
 
 ### rx 설치가 되었는지 확인
 ```swift
-let disposeBag = DisposeBag()
+let disposeBag = DisposeBag() 
 
 Observable.just("Hello, RxSwift!")
   .subscribe { print($0) }
