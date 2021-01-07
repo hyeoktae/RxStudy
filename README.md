@@ -490,5 +490,68 @@ factory.subscribe {print($0)} // 과일방출
   .disposed(by: disposeBag)
 ```
 
+### create
+
+옵져버블이 동작하는 방식을 직접 구현하기
+
+```swift
+let disposeBag = DisposeBag()
+
+enum MyError: Error {
+   case error
+}
+// 파라미터로 전달된 요소를 방출하는 옵져버블 생성한다. 이렇게 생성된 옵져버블은 모든요소를 방출하고 컴플리티드 방출하고 종료된다. 이전에 쓴거로는 동작을 바꿀수 없다. 옵져버블이 동작하는 방식을 직접 구현하려면 이번에 쓸 create를 쓴다.
+Observable<String>.create { (observer) -> Disposable in
+  guard let url = URL(string: "https://www.apple.com") else {
+    observer.onError(MyError.error)
+    return Disposables.create() // Disposables을 쓰는게 맞음. s 필수
+  }
+  
+  guard let html = try? String(contentsOf: url, encoding: .utf8) else {
+    observer.onError(MyError.error)
+    return Disposables.create()
+  }
+  
+  observer.onNext(html)
+  observer.onCompleted()
+  
+  observer.onNext("After completed") // 이미 completed가 되어서 이건 방출되지 않는다. 방출하고 싶으면 onCompleted전에 해야한다.
+  
+  return Disposables.create()
+}
+.subscribe { print($0) }
+.disposed(by: disposeBag)
+// 요소를 방출 onNext로 한다. 옵져버블 종료하기 위해서는 onError or onCompleted 를 해야한다.
+```
 
 
+### empty, error
+
+empty
+
+```swift
+let disposeBag = DisposeBag()
+
+// next이벤트를 전달하지 않는다. 어떠한 요소도 방출하지 않는다.
+
+Observable<Void>.empty() // 요소를 방출하지 않아서 요소의 형식은 중요치 않음. 보통은 void
+  .subscribe { print($0) }
+  .disposed(by: disposeBag)
+// 이건 옵져버가 아무런 동작없이 종료해야할 때 사용한다.
+```
+
+error
+
+```swift
+let disposeBag = DisposeBag()
+
+enum MyError: Error {
+   case error
+}
+
+// 에러이벤트를 전달하고 종료하는 옵져버블을 생성한다. 보통 애러를 처리할때 생성한다.
+Observable<Void>.error(MyError.error)
+  .subscribe { print($0) }
+  .disposed(by: disposeBag)
+// next이벤트를 전달하지 않는다. 
+```
