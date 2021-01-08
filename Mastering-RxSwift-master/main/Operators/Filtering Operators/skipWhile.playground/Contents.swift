@@ -29,3 +29,13 @@ import RxSwift
 
 let disposeBag = DisposeBag()
 let numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+
+// 클로저를 파람으로 받는다. predicate로 사용되고, 리턴값이 false가 그때부터 요소 방출한다. 그 전까지는 모두 무시한다. (true가 리턴되는 동안 모두 무시) 방출되는 요소가 포함되는 옵져버블을 리턴한다.
+
+Observable.from(numbers)
+  .skipWhile {!$0.isMultiple(of: 2)}
+  .subscribe{print($0)}
+  .disposed(by: disposeBag)
+
+// 리턴값이 false가 되는 순간부터 모든 값이 방출된다. 구독자에게 전달된다.

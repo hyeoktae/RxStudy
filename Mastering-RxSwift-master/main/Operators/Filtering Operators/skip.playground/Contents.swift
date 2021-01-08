@@ -30,5 +30,14 @@ import RxSwift
 let disposeBag = DisposeBag()
 let numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
+// 특정 연산자를 무시하는 방법
+// 정수를 파람으로 받고, 옵져버블이 방출하는 요소중 지정된 수만큼 무시하고 이후에 방출되는 요소만 구독자에게 방출한다.
+
+Observable.from(numbers)
+  .skip(3) // 인덱스 아님, 갯수임
+  .subscribe {print($0)}
+  .disposed(by: disposeBag)
+
+
 
 

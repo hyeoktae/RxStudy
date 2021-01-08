@@ -29,3 +29,21 @@ import RxSwift
 
 let disposeBag = DisposeBag()
 
+let subject = PublishSubject<Int>()
+let trigger = PublishSubject<Int>()
+
+subject.skipUntil(trigger)
+  .subscribe {print($0)}
+  .disposed(by: disposeBag)
+
+subject.onNext(1)
+
+trigger.onNext(0)
+
+subject.onNext(2)
+
+trigger.onNext(3)
+
+subject.onNext(4)
+// 옵져버블타입을 파람으로 받는다. 다른 옵져버블을 받는다. 이 옵져버블이 넥스트이벤트를 전달하기 전까지 원본옵져버블이 방출하는 이벤트를 무시한다. 이런 특징때문에 파라미터로 전달하는 옵져버블을 트리거라고 부르기도 한다.
+// 트리거가 방출 한 후에 서브젝트가 방출을 할 수 있다.  2,4

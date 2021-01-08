@@ -31,9 +31,14 @@ let disposeBag = DisposeBag()
 let fruits = ["🍏", "🍎", "🍋", "🍓", "🍇"]
 
 
+// 특정 인덱스에 위치한 요소를 제한적으로 방출하는 방법
 
+Observable.from(fruits)
+  .elementAt(1)
+  .subscribe{print($0)}
+  .disposed(by: disposeBag)
 
-
+// elementAt -> 정수 인덱스를 파람으로 받아서 옵져버블을 리턴한다. 하나의 요소를 전달하고 컴플리트 방출한다.
 
 
 

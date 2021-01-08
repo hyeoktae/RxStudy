@@ -31,8 +31,14 @@ let disposeBag = DisposeBag()
 let fruits = ["🍏", "🍎", "🍋", "🍓", "🍇"]
 
 
+// 옵져버블이 방출하는 넥스트 이벤트를 필터링하고 컨플리티드, 에러 이벤트만 구독자에게 전달한다.
 
-
+Observable.from(fruits)
+  .ignoreElements()
+  .subscribe {print($0)}
+  .disposed(by: disposeBag)
+// ignoreElements() -> param받지않음. 리턴형은 Completable. 이건 트레이치 라고 불리는 특별한 옵져버블이다. 컴플리티드나 에러만 전달하고 넥스트는 무시한다. 작업의 성공과 실패에만 관심이 있을 때 사용한다.
+// ignoreElements가 필터링 하기 때문에 next가 무시된다.
 
 
 

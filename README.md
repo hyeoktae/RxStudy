@@ -555,3 +555,119 @@ Observable<Void>.error(MyError.error)
   .disposed(by: disposeBag)
 // next이벤트를 전달하지 않는다. 
 ```
+
+
+## Filtering Operators
+
+
+### ignoreElements Operator
+
+```swift
+let disposeBag = DisposeBag()
+let fruits = ["🍏", "🍎", "🍋", "🍓", "🍇"]
+
+
+// 옵져버블이 방출하는 넥스트 이벤트를 필터링하고 컨플리티드, 에러 이벤트만 구독자에게 전달한다.
+
+Observable.from(fruits)
+  .ignoreElements()
+  .subscribe {print($0)}
+  .disposed(by: disposeBag)
+// ignoreElements() -> param받지않음. 리턴형은 Completable. 이건 트레이치 라고 불리는 특별한 옵져버블이다. 컴플리티드나 에러만 전달하고 넥스트는 무시한다. 작업의 성공과 실패에만 관심이 있을 때 사용한다.
+// ignoreElements가 필터링 하기 때문에 next가 무시된다.
+```
+
+### elementsAt
+
+```swift
+let disposeBag = DisposeBag()
+let fruits = ["🍏", "🍎", "🍋", "🍓", "🍇"]
+
+
+// 특정 인덱스에 위치한 요소를 제한적으로 방출하는 방법
+
+Observable.from(fruits)
+  .elementAt(1)
+  .subscribe{print($0)}
+  .disposed(by: disposeBag)
+
+// elementAt -> 정수 인덱스를 파람으로 받아서 옵져버블을 리턴한다. 하나의 요소를 전달하고 컴플리트 방출한다.
+```
+
+
+### filter
+
+```swift
+let disposeBag = DisposeBag()
+let numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+// 옵져버블이 방출하는 요소를 필터링한다.
+
+Observable.from(numbers)
+  .filter {$0.isMultiple(of: 2)}
+  .subscribe {print($0)}
+  .disposed(by: disposeBag)
+
+
+// filter -> 클로져를 파람으로 받는다. 이건 predicate로 사용된다. 여기서 true를 리턴하는 요소가 연산자가 리턴하는 옵져버블에 포함된다.
+```
+
+
+### skip
+
+```swift
+let disposeBag = DisposeBag()
+let numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+// 특정 연산자를 무시하는 방법
+// 정수를 파람으로 받고, 옵져버블이 방출하는 요소중 지정된 수만큼 무시하고 이후에 방출되는 요소만 구독자에게 방출한다.
+
+Observable.from(numbers)
+  .skip(3) // 인덱스 아님, 갯수임
+  .subscribe {print($0)}
+  .disposed(by: disposeBag)
+```
+
+
+###  skipWhile
+
+```swift
+let disposeBag = DisposeBag()
+let numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+
+// 클로저를 파람으로 받는다. predicate로 사용되고, 리턴값이 false가 그때부터 요소 방출한다. 그 전까지는 모두 무시한다. (true가 리턴되는 동안 모두 무시) 방출되는 요소가 포함되는 옵져버블을 리턴한다.
+
+Observable.from(numbers)
+  .skipWhile {!$0.isMultiple(of: 2)}
+  .subscribe{print($0)}
+  .disposed(by: disposeBag)
+
+// 리턴값이 false가 되는 순간부터 모든 값이 방출된다. 구독자에게 전달된다.
+```
+
+
+###  skipUntil
+
+```swift
+let disposeBag = DisposeBag()
+
+let subject = PublishSubject<Int>()
+let trigger = PublishSubject<Int>()
+
+subject.skipUntil(trigger)
+  .subscribe {print($0)}
+  .disposed(by: disposeBag)
+
+subject.onNext(1)
+
+trigger.onNext(0)
+
+subject.onNext(2)
+
+trigger.onNext(3)
+
+subject.onNext(4)
+// 옵져버블타입을 파람으로 받는다. 다른 옵져버블을 받는다. 이 옵져버블이 넥스트이벤트를 전달하기 전까지 원본옵져버블이 방출하는 이벤트를 무시한다. 이런 특징때문에 파라미터로 전달하는 옵져버블을 트리거라고 부르기도 한다.
+// 트리거가 방출 한 후에 서브젝트가 방출을 할 수 있다.  2,4
+```

@@ -30,6 +30,12 @@ import RxSwift
 let disposeBag = DisposeBag()
 let numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
+// 옵져버블이 방출하는 요소를 필터링한다.
+
+Observable.from(numbers)
+  .filter {$0.isMultiple(of: 2)}
+  .subscribe {print($0)}
+  .disposed(by: disposeBag)
 
 
-
+// filter -> 클로져를 파람으로 받는다. 이건 predicate로 사용된다. 여기서 true를 리턴하는 요소가 연산자가 리턴하는 옵져버블에 포함된다.
