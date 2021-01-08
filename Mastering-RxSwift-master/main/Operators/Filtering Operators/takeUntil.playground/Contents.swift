@@ -30,3 +30,19 @@ import RxSwift
 let disposeBag = DisposeBag()
 let numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
+
+let subject = PublishSubject<Int>()
+let trigger = PublishSubject<Int>()
+
+subject.takeUntil(trigger)
+  .subscribe {print($0)}
+  .disposed(by: disposeBag)
+
+subject.onNext(1)
+subject.onNext(2)
+
+trigger.onNext(0) // 트리거에서 방출하면 completed이벤트가 전달된다.
+
+subject.onNext(3) // 컴플리트가 방출되어서 더이상 요소를 방출하지 않는다.
+
+// 옵져버블타입을 파람으로 받는다. 파람으로 받은 옵져버블에서 넥스트이벤트를 방출하기 전까지 원본에서 넥스트 이벤트를 전달한다.

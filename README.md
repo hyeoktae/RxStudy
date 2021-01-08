@@ -671,3 +671,104 @@ subject.onNext(4)
 // 옵져버블타입을 파람으로 받는다. 다른 옵져버블을 받는다. 이 옵져버블이 넥스트이벤트를 전달하기 전까지 원본옵져버블이 방출하는 이벤트를 무시한다. 이런 특징때문에 파라미터로 전달하는 옵져버블을 트리거라고 부르기도 한다.
 // 트리거가 방출 한 후에 서브젝트가 방출을 할 수 있다.  2,4
 ```
+
+
+### take
+
+```swift
+let disposeBag = DisposeBag()
+let numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+// 정수를 파람으로 받아서 해당숫자만큼만 요소를 방출한다.  이어지는 나머지 이벤트는 무시.
+// 넥스트이벤트를 제외한 나머지 이벤트엔 영향을 주지 않는다.
+
+Observable.from(numbers)
+  .take(5)
+  .subscribe {print($0)}
+  .disposed(by: disposeBag)
+```
+
+### takeWhile
+
+```swift
+let disposeBag = DisposeBag()
+let numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+// 클로져를 파람으로 받고 predicate로 사용한다. 여기에서 true를 리턴하면 구독자에게 전달한다. 요소를 방출한다. 연산자가 리턴하는 옵져버블은 최종적으로 조건을 만족시키는 요소만 포함된다.
+
+Observable.from(numbers)
+  .takeWhile { !$0.isMultiple(of: 2) }
+  .subscribe {print($0)}
+  .disposed(by: disposeBag)
+
+// takeWhile -> 클로져가 false를 리턴하면 더이상 요소를 방출하지 않는다. 컴플리트나 에러만 방출한다. 
+```
+
+
+### takeUntil
+
+```swift
+let disposeBag = DisposeBag()
+let numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+
+let subject = PublishSubject<Int>()
+let trigger = PublishSubject<Int>()
+
+subject.takeUntil(trigger)
+  .subscribe {print($0)}
+  .disposed(by: disposeBag)
+
+subject.onNext(1)
+subject.onNext(2)
+
+trigger.onNext(0) // 트리거에서 방출하면 completed이벤트가 전달된다.
+
+subject.onNext(3) // 컴플리트가 방출되어서 더이상 요소를 방출하지 않는다.
+
+// 옵져버블타입을 파람으로 받는다. 파람으로 받은 옵져버블에서 넥스트이벤트를 방출하기 전까지 원본에서 넥스트 이벤트를 전달한다.
+```
+
+
+### takeLast
+
+```swift
+let disposeBag = DisposeBag()
+let numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+
+let subject = PublishSubject<Int>()
+
+subject.takeLast(2)
+  .subscribe {print($0)}
+  .disposed(by: disposeBag)
+
+numbers.forEach {
+  subject.onNext($0)
+}
+
+// 위 코드까지 결과는 아무것도 안나온다. 하지만 코드는 작동했다. takeLast는 마지막에 방출한 9, 10을 버퍼에 저장하고 있다.
+
+subject.onNext(11)
+
+// 이러면 버퍼에 저장되어있는 9, 10이 -> 10, 11로 업데이트 된다.
+// 아직은 옵져버블이 다른요소를 방출할지 아니면 종료할지 판단할수 없어서 요소를 방출하는 시점을 계속 지연시킨다.
+
+//subject.onCompleted()
+
+// 컴플리티드 이벤트를 전달하면, 이때 버퍼에 저장되었던 요소가 구독자에게 전달되고, 그 후 컴플리티드 이벤트가 전달된다.
+
+enum MyError: Error {
+  case error
+}
+
+subject.onError(MyError.error)
+
+// 에러가 전달되면 버퍼에 있는 요소는 전달되지 않고, 에러만 전달된다.
+
+// 정수를 파람으로 받아서 옵져버블을 리턴한다. 리턴되는 옵져버블에는 원본옵져버블이 방출하는 요소중에서 마지막에 방출된 n개의 요소가 포함된다. 이 연산자에서 가장 중요한것은 구독자로 전달되는 시점이 딜레이된다는 것!
+```
+
+
+
+

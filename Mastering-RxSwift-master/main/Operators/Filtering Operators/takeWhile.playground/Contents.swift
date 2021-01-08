@@ -30,4 +30,11 @@ import RxSwift
 let disposeBag = DisposeBag()
 let numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
+// 클로져를 파람으로 받고 predicate로 사용한다. 여기에서 true를 리턴하면 구독자에게 전달한다. 요소를 방출한다. 연산자가 리턴하는 옵져버블은 최종적으로 조건을 만족시키는 요소만 포함된다.
 
+Observable.from(numbers)
+  .takeWhile { !$0.isMultiple(of: 2) }
+  .subscribe {print($0)}
+  .disposed(by: disposeBag)
+
+// takeWhile -> 클로져가 false를 리턴하면 더이상 요소를 방출하지 않는다. 컴플리트나 에러만 방출한다. 
