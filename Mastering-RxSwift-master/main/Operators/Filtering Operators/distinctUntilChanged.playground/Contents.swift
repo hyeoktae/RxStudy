@@ -30,4 +30,12 @@ import RxSwift
 let disposeBag = DisposeBag()
 let numbers = [1, 1, 3, 2, 2, 3, 1, 5, 5, 7, 7, 7]
 
+// 동일한 항목이 연속적으로 방출되지 않도록 필터링해주는 연산자.
 
+Observable.from(numbers)
+  .distinctUntilChanged()
+  .subscribe {print($0)}
+  .disposed(by: disposeBag)
+
+
+// distinctUntilChanged -> 파라미터가 없다. 원본옵져버블에서 전달되는 두개의 요소를 비교해서 이전요소와 같다면 방출하지 않는다. 즉 앞에꺼랑 비교해서 같으면 무시, 다르면 방출한다. 1,3,2,3,1,5,7
