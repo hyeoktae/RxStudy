@@ -832,3 +832,163 @@ Observable.from(numbers)
 ```
 
 
+### debounce
+
+```swift
+let disposeBag = DisposeBag()
+
+// debounce와 throttle은 짧은시간동안 반복적으로 방출되는 이벤트를 제어한다는 공통점이 있다.
+// 연산자로 전달하는 파람도 동일하다. 하지만 연산의 결과는 다르다.
+
+// debounce -> 두개의 파람을 받는다.
+// 1. 시간을 전달한다. 이시간은 연산자가 넥스트이벤트를 방출할지 결정하는 조건으로 사용된다. 옵져버가 넥스트를 방출한 후, 지정된 시간동안 다른 넥스트이벤트를 방출하지 않는다면, 해당 시점에 가장마지막으로 방출된 넥스트이벤트를 구독자에게 전달한다. 반대로 지정된 시간 이내에 또다른 넥스트가 방출된다면, 타이머를 초기화한다. 이부분을 이해하는게 정말 중요하다.
+// 2. 타이머를 실행할 스케쥴러를 전달한다.
+
+let buttonTap = Observable<String>.create { observer in
+  DispatchQueue.global().async {
+    for i in 1...10 {
+      observer.onNext("Tap \(i)")
+      Thread.sleep(forTimeInterval: 0.3)
+    }
+    
+    Thread.sleep(forTimeInterval: 1)
+    
+    for i in 11...20 {
+      observer.onNext("Tap \(i)")
+      Thread.sleep(forTimeInterval: 0.5)
+    }
+    
+    observer.onCompleted()
+  }
+  
+  return Disposables.create {
+    
+  }
+}
+
+buttonTap
+  .debounce(.milliseconds(499), scheduler: MainScheduler.instance)
+  .subscribe { print($0) }
+  .disposed(by: disposeBag)
+
+// .milliseconds(1000) [1초] 를 넣으면 10, 20 나오고 컴플리트
+// .milliseconds(400) [0.4초] 를 넣으면 10, 11, 12...20 후 컴플리트, 설정한 0.5초보다 짧기때문이다.
+// 주로 검색 기능을 만들때 사용한다. 문자가 입력될때마다 작업을 실행하는것은 효율적이지 않다. 
+```
+
+
+### throttle
+
+```swift
+let disposeBag = DisposeBag()
+
+// debounce와 throttle은 짧은시간동안 반복적으로 방출되는 이벤트를 제어한다는 공통점이 있다.
+// throttle -> 실제로는 3개의 파람을 받는다. (기본값을 가진 2번째 파람은 생략가능)
+// 1. 반복주기를 전달, 3. 스케쥴러를 전달.
+// 지정된 주기동안 하나의 이벤트만 구독자에게 전달한다. 보통 두번째 파람은 기본값을 사용하는데, 이때는 주기를 엄격하게 지킨다. 항상 지정된 주기마다 하나씩 이벤트를 전달한다.
+// 반대로 두번째 파람에 false를 주면 반복주기가 경과한 다음, 가장 먼저 방출되는 이벤트를 구독자에게 전달한다.
+
+let buttonTap = Observable<String>.create { observer in
+  DispatchQueue.global().async {
+    for i in 1...10 {
+      observer.onNext("Tap \(i)")
+      Thread.sleep(forTimeInterval: 0.3)
+    }
+    
+    Thread.sleep(forTimeInterval: 1)
+    
+    for i in 11...20 {
+      observer.onNext("Tap \(i)")
+      Thread.sleep(forTimeInterval: 0.5)
+    }
+    
+    observer.onCompleted()
+  }
+  
+  return Disposables.create()
+}
+
+
+buttonTap
+  .throttle(.milliseconds(1000), scheduler: MainScheduler.instance)
+  .subscribe { print($0) }
+  .disposed(by: disposeBag)
+
+// .milliseconds(1000)
+
+
+// throttle은 넥스트이벤트를 지정된 주기마다 하나씩 구독자에게 전달한다.
+// 짧은시간동안 반복되는 탭 이벤트나 델리게이트 메시지를 처리할때 주로 사용한다.
+```
+
+
+```swift
+let disposeBag = DisposeBag()
+
+// 두번째 파람값에 따른 결과 비교
+
+func currentTimeString() -> String {
+  let f = DateFormatter()
+  f.dateFormat = "yyyy-MM-dd HH:mm:ss.SSS"
+  return f.string(from: Date())
+}
+
+
+//Observable<Int>.interval(.seconds(1), scheduler: MainScheduler.instance)
+//  .debug()
+//  .take(10)
+//  .throttle(.milliseconds(2500), latest: true, scheduler: MainScheduler.instance)
+//  .subscribe { print(currentTimeString(), $0) }
+//  .disposed(by: disposeBag)
+// 두번째 파람을 true로 한다면, 주기를 정확히 지킨다.
+
+/*
+ 2021-01-12 00:51:58.751: 2.xcplaygroundpage:45 (__lldb_expr_77) -> subscribed
+ 2021-01-12 00:51:59.774: 2.xcplaygroundpage:45 (__lldb_expr_77) -> Event next(0)
+ 2021-01-12 00:51:59.775 next(0)
+ 2021-01-12 00:52:00.774: 2.xcplaygroundpage:45 (__lldb_expr_77) -> Event next(1)
+ 2021-01-12 00:52:01.775: 2.xcplaygroundpage:45 (__lldb_expr_77) -> Event next(2)
+ 2021-01-12 00:52:02.278 next(2)
+ 2021-01-12 00:52:02.775: 2.xcplaygroundpage:45 (__lldb_expr_77) -> Event next(3)
+ 2021-01-12 00:52:03.774: 2.xcplaygroundpage:45 (__lldb_expr_77) -> Event next(4)
+ 2021-01-12 00:52:04.775: 2.xcplaygroundpage:45 (__lldb_expr_77) -> Event next(5)
+ 2021-01-12 00:52:04.780 next(5)
+ 2021-01-12 00:52:05.775: 2.xcplaygroundpage:45 (__lldb_expr_77) -> Event next(6)
+ 2021-01-12 00:52:06.774: 2.xcplaygroundpage:45 (__lldb_expr_77) -> Event next(7)
+ 2021-01-12 00:52:07.281 next(7)
+ 2021-01-12 00:52:07.774: 2.xcplaygroundpage:45 (__lldb_expr_77) -> Event next(8)
+ 2021-01-12 00:52:08.774: 2.xcplaygroundpage:45 (__lldb_expr_77) -> Event next(9)
+ 2021-01-12 00:52:08.774: 2.xcplaygroundpage:45 (__lldb_expr_77) -> isDisposed
+ 2021-01-12 00:52:09.782 next(9)
+ 2021-01-12 00:52:09.783 completed
+ */
+
+Observable<Int>.interval(.seconds(1), scheduler: MainScheduler.instance)
+   .debug()
+   .take(10)
+   .throttle(.milliseconds(2500), latest: false, scheduler: MainScheduler.instance)
+   .subscribe { print(currentTimeString(), $0) }
+   .disposed(by: disposeBag)
+// 구독자로 전달된 첫번째와 2번째를 시간을 비교하면 3초이다. 넥스트이벤트가 방출되고 지정된 주기가 지나고 그 이후에 첫번째로 방출되는 넥스트이벤트를 전달한다. 첫번째 넥스트이벤트는 구독자에게 바로 전달된다. 이어서 원본옵져버블이 1과 2를 방출하고 0.5초후에 주기가 끝나는데 두번째 파람으로 true를 줬다면 마지막에 방출된 넥스트 이벤트가 구독자에게 전달되었겠지만, 이번에는 false라서 원본옵져버블이 새로운 넥스트이벤트를 방출할 때 까지 기다린다. 0.5초뒤 3이라는 넥스트이벤트가 나타다면 3을 구독자에게 전달한다.
+// 지정된 주기동안 하나의 넥스트이벤트만 전달하는건 다르지 않다. 차이는 넥스트이벤트가 구독자로 전달되는 주기이다. true면 주기를 엄격히 지키지만, false라면 지정된 주기를 초과할 수 있다.
+
+/*
+ 2021-01-12 01:01:39.227: 2.xcplaygroundpage:74 (__lldb_expr_92) -> subscribed
+ 2021-01-12 01:01:40.230: 2.xcplaygroundpage:74 (__lldb_expr_92) -> Event next(0)
+ 2021-01-12 01:01:40.231 next(0)
+ 2021-01-12 01:01:41.229: 2.xcplaygroundpage:74 (__lldb_expr_92) -> Event next(1)
+ 2021-01-12 01:01:42.228: 2.xcplaygroundpage:74 (__lldb_expr_92) -> Event next(2)
+ 2021-01-12 01:01:43.228: 2.xcplaygroundpage:74 (__lldb_expr_92) -> Event next(3)
+ 2021-01-12 01:01:43.228 next(3)
+ 2021-01-12 01:01:44.229: 2.xcplaygroundpage:74 (__lldb_expr_92) -> Event next(4)
+ 2021-01-12 01:01:45.228: 2.xcplaygroundpage:74 (__lldb_expr_92) -> Event next(5)
+ 2021-01-12 01:01:46.229: 2.xcplaygroundpage:74 (__lldb_expr_92) -> Event next(6)
+ 2021-01-12 01:01:46.230 next(6)
+ 2021-01-12 01:01:47.229: 2.xcplaygroundpage:74 (__lldb_expr_92) -> Event next(7)
+ 2021-01-12 01:01:48.229: 2.xcplaygroundpage:74 (__lldb_expr_92) -> Event next(8)
+ 2021-01-12 01:01:49.229: 2.xcplaygroundpage:74 (__lldb_expr_92) -> Event next(9)
+ 2021-01-12 01:01:49.230 next(9)
+ 2021-01-12 01:01:49.231 completed
+ 2021-01-12 01:01:49.231: 2.xcplaygroundpage:74 (__lldb_expr_92) -> isDisposed
+ */
+```
