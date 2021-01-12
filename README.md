@@ -992,3 +992,83 @@ Observable<Int>.interval(.seconds(1), scheduler: MainScheduler.instance)
  2021-01-12 01:01:49.231: 2.xcplaygroundpage:74 (__lldb_expr_92) -> isDisposed
  */
 ```
+
+
+# Transforming Operators
+
+### toArray Operator
+
+```swift
+let disposeBag = DisposeBag()
+
+// 옵져버블이 방출하는 모든 요소를 배열에 담고, 이 배열을 방출하는 옵져버블을 생성한다.
+
+let subject = PublishSubject<Int>()
+
+subject
+  .toArray()
+  .subscribe { print($0) }
+  .disposed(by: disposeBag)
+
+subject.onNext(1)
+subject.onNext(2)
+subject.onCompleted()
+
+// toArray -> 파람 없다. 리턴값: 싱글
+// 소스 옵져버블이 방출하는 모든요소를 하나의 배열에 담는다. 소스옵져버블이 더이상 요소를 방출하지 않는 시점이되야 모아둔 배열을 방출한다. completed하면 요소들을 모아둔 배열을 방출한다. 
+```
+
+### map
+
+```swift
+let disposeBag = DisposeBag()
+let skills = ["Swift", "SwiftUI", "RxSwift"]
+
+// 옵져버블이 배출하는 항목을 대상으로 함수를 실행한다. 그 후, 실행결과를 방출하는 옵져버블을 리턴한다.
+
+Observable.from(skills)
+//  .map { "Hello, \($0)" }
+  .map {$0.count}
+  .subscribe {print($0)}
+  .disposed(by: disposeBag)
+
+// 클로저가 리턴하는 형식은 원하는데로 바꿀 수 있다. 
+```
+
+### flatMap
+
+```swift
+let disposeBag = DisposeBag()
+
+/*
+ 원본옵져버블이 항목을 방출하면, 플랫맵 연산자가 변환함수를 실행, 변환함수는 방출된항목을 옵져버블로 변환한다.
+ 방출된 항목의 값이 바뀌면 플랫맵연산자가 변환한 옵져버블이 새로운항목을 방출한다.
+ 이런특징때문에 원본옵져버블이 방출하는 항목을 지속적으로 감시하고 최신값을 확인 할 수 있다.
+ 플랫맵은 모든옵져버블이 방출하는 항목을 모아서, 최종적으로 하나의 옵져버블을 리턴한다.
+ 개별항목이 개별옵져버블로 변환되었다가 다시 하나의 옵져버블로 합쳐진다.
+ */
+
+let a = BehaviorSubject(value: 1)
+let b = BehaviorSubject(value: 2)
+
+let subject = PublishSubject<BehaviorSubject<Int>>()
+
+subject.flatMap{$0 as Observable}
+  .subscribe {print($0)}
+  .disposed(by: disposeBag)
+
+subject.onNext(b)
+subject.onNext(a)
+
+
+b.onNext(4)
+a.onNext(3)
+
+// 플랫맵 연산자는 원본옵져버블이 방출하는 항목을 새로운옵져버블로 변환한다.
+// 새로운 옵져버블은 항목이 업데이트 될 때마다 새로운 항목을 방출한다.
+// 이렇게 생성된 모든 옵져버블은 최종적으로 하나의 옵져버블로 합쳐지고 모든 항목들이 이 옵져버블을 통해서 구독자에게 전달된다.
+// 단순이 처음에 방출된 항목만 구독자로 방출되는게 아니라, 업데이트된 최신몫도 방출된다.
+// 이건 네트워크 통신할 때 자주 사용된다. 
+```
+
+

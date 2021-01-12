@@ -30,5 +30,12 @@ import RxSwift
 let disposeBag = DisposeBag()
 let skills = ["Swift", "SwiftUI", "RxSwift"]
 
+// 옵져버블이 배출하는 항목을 대상으로 함수를 실행한다. 그 후, 실행결과를 방출하는 옵져버블을 리턴한다.
 
+Observable.from(skills)
+//  .map { "Hello, \($0)" }
+  .map {$0.count}
+  .subscribe {print($0)}
+  .disposed(by: disposeBag)
 
+// 클로저가 리턴하는 형식은 원하는데로 바꿀 수 있다. 
