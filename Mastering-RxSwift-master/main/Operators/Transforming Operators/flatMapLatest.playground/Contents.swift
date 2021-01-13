@@ -29,13 +29,32 @@ import RxSwift
 
 let disposeBag = DisposeBag()
 
+// flatMapLatest -> 가장 최근에 항목을 방출한 옵져버블이 방출하는 요소만 구독자에게 전달한다.
+// 원본옵져버블이 방출하는 요소를 새로운 옵져버블로 변환하고,
+// 가장 최근에 변환된 옵져버블이 방출하는 요소만 구독자에게 전달한다.
 let a = BehaviorSubject(value: 1)
 let b = BehaviorSubject(value: 2)
 
 let subject = PublishSubject<BehaviorSubject<Int>>()
 
 subject
-   .flatMap { $0.asObservable() }
+   .flatMapLatest { $0.asObservable() }
    .subscribe { print($0) }
    .disposed(by: disposeBag)
 
+subject.onNext(a)
+
+a.onNext(11)
+
+subject.onNext(b)
+
+b.onNext(22)
+a.onNext(33)
+a.onNext(66)
+b.onNext(77)
+subject.onNext(a)
+b.onNext(44)
+subject.onNext(b)
+subject.onNext(a)
+a.onNext(55)
+// 1,11,2,22,77,66,44,66,55
