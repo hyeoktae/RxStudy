@@ -1182,5 +1182,5 @@ Observable<Int>.interval(.seconds(1), scheduler: MainScheduler.instance)
   .subscribe {print($0)}
   .disposed(by: disposeBag)
 // 버퍼연산자는 첫번째 파람으로 전달한 타임스팬이 경과하면 수집된 항목들을 즉시 방출한다.
-// 두번째 파람으로 지정한 수만큼 수집되지 않아도 즉시방출한다.
+// 두번째 파람으로 지정한 수만큼 수집되지 않아도 즉시방출한다. 
 ```
