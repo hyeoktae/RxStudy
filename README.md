@@ -85,7 +85,12 @@ o1.subscribe {
 
 2. 
 ```swift
-o1.subscribe(onNext: <#T##((Int) -> Void)?##((Int) -> Void)?##(Int) -> Void#>, onError: <#T##((Error) -> Void)?##((Error) -> Void)?##(Error) -> Void#>, onCompleted: <#T##(() -> Void)?##(() -> Void)?##() -> Void#>, onDisposed: <#T##(() -> Void)?##(() -> Void)?##() -> Void#>)
+o1.subscribe(
+onNext: <#T##((Int) -> Void)?##((Int) -> Void)?##(Int) -> Void#>, 
+onError: <#T##((Error) -> Void)?##((Error) -> Void)?##(Error) -> Void#>, 
+onCompleted: <#T##(() -> Void)?##(() -> Void)?##() -> Void#>, 
+onDisposed: <#T##(() -> Void)?##(() -> Void)?##() -> Void#>
+)
 ```
 
 ```swift
@@ -157,7 +162,8 @@ let subscription2 = Observable<Int>.interval(.seconds(1),
 // 위 함수는 1초마다 1씩 증가하는 정수를 방출하는데, 무한정 방출한다. 그렇기에 Dispose가 필요하다.
 
 DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-  subscription2.dispose() // 이러면 즉시 리소스가 해제되기때문에 completed가 나오지 않고 종료된다. 이 방법은 가능하면 피해야한다.
+  subscription2.dispose() 
+  // 이러면 즉시 리소스가 해제되기때문에 completed가 나오지 않고 종료된다. 이 방법은 가능하면 피해야한다.
 }
 ```
 
@@ -187,7 +193,8 @@ filter를 먼저하면 2,4,6,8 이고, take를 먼저하면 2,4 가 나온다.
 옵저버인 동시에 옵저버블이다. 
 
 publishSubject: 서브젝트로 전달되는 새로운 이벤트를 구독자에게 전달한다.
-BehaviorSubject: 생성시점에 시작이벤트를 지정한다. 서브젝트로 전달되는 이벤트중에 가장마지막의 이벤트를 저장했다가, 새로운 구독자에게 마지막에 저장된 이벤트를 준다.
+BehaviorSubject: 생성시점에 시작이벤트를 지정한다. 서브젝트로 전달되는 이벤트중에 가장마지막의 이벤트를 저장했다가, 
+새로운 구독자에게 마지막에 저장된 이벤트를 준다.
 ReplaySubject: 처음부터 모든 이벤트를 저장한다. 그러고 새로운 구독자가 나타나면 저장했던 모든 이벤트를 준다.
 AsyncSubject: subject로 completed가 전달되는 시점에 마지막 이벤트를 구독자에게 전달한다.
 
@@ -223,7 +230,7 @@ subject.onNext("Subject")
 //subject.onCompleted()
 subject.onError(MyError.error)
 
-let o3 = subject.subscribe { print(">> 3", $0) } // 이미 completed가 되었기때문에 (종료됨) 바로 completed가 된다.
+let o3 = subject.subscribe { print(">> 3", $0) } // 이미 completed가 되었기때문에 바로 completed가 된다.
 o3.disposed(by: disposeBag) // 이 전에 error가 나왔기때문에 바로 error가 된다.
 // 만약 이전의 이벤트들을 저장하고 싶으면, replays 나 cold observable을 사용해야한다.
 ```
@@ -243,21 +250,25 @@ let p = PublishSubject<Int>() // 이벤트가 없는채로 생성
 p.subscribe { print("PublishSubject >>", $0) }
   .disposed(by: disposeBag)
 
-let b = BehaviorSubject<Int>(value: 0) // 초기이벤트가 있는채로 생성 0인이유는 제네릭타임이 Int로 정해졌기때문이다. 새로운 구독자가 생성되면 바로 저장되어있는 초기 이벤트값이 전달된다.
+let b = BehaviorSubject<Int>(value: 0) 
 b.subscribe { print("BehaviorSubject >>", $0) } // BehaviorSubject >> next(0)
   .disposed(by: disposeBag)
+// 초기이벤트가 있는채로 생성 0인이유는 제네릭타임이 Int로 정해졌기때문이다. 
+// 새로운 구독자가 생성되면 바로 저장되어있는 초기 이벤트값이 전달된다.
 
 b.onNext(1)
  
-b.subscribe { print("BehaviorSubject2 >>", $0) } // BehaviorSubject >> next(1) 결론적으로 보면 마지막 이벤트를 새로운구독자에게 전달을 하는것.
+b.subscribe { print("BehaviorSubject2 >>", $0) } 
   .disposed(by: disposeBag)
+// BehaviorSubject >> next(1) 결론적으로 보면 마지막 이벤트를 새로운구독자에게 전달을 하는것.
 
 //b.onCompleted()
 b.onError(MyError.error)
 
 
-b.subscribe { print("BehaviorSubject3 >>", $0) } // 이미 completed가 되어서(종료) 얘도 바로 completed가 된다. err도 마찮가지이다.
+b.subscribe { print("BehaviorSubject3 >>", $0) } 
   .disposed(by: disposeBag)
+// 이미 completed가 되어서(종료) 얘도 바로 completed가 된다. err도 마찮가지이다.
 ```
 
 
@@ -271,7 +282,8 @@ enum MyError: Error {
 }
 
 
-let rs = ReplaySubject<Int>.create(bufferSize: 3) // 3개의 이벤트를 저장하는 버퍼가 생성됨, 버퍼는 메모리를 사용하기 때문에, 필요 이상의 큰 버퍼를 사용하는것은 피해야한다.
+let rs = ReplaySubject<Int>.create(bufferSize: 3) 
+// 3개의 이벤트를 저장하는 버퍼가 생성됨, 버퍼는 메모리를 사용하기 때문에, 필요 이상의 큰 버퍼를 사용하는것은 피해야한다.
 
 (1...10).forEach {
   rs.onNext($0)
@@ -308,7 +320,8 @@ enum MyError: Error {
 }
 
 
-// 서브젝트로 completed가 오기 전까지는 어떤 이벤트로 구독자에게 전달하지 않으나, completed가 오면 가장 마지막의 이벤트를 전달한다.
+// 서브젝트로 completed가 오기 전까지는 어떤 이벤트로 구독자에게 전달하지 않으나, 
+// completed가 오면 가장 마지막의 이벤트를 전달한다.
 
 let subject = AsyncSubject<Int>()
 
@@ -440,7 +453,12 @@ Observable.generate(initialState: 10, condition: { $0 >= 0 }, iterate: { $0 - 2 
   .subscribe {print($0)}
   .disposed(by: disposeBag)
 
-Observable.generate(initialState: red, condition: { $0.count < 15 }) {$0.count.isMultiple(of: 2) ? $0 + red : $0 + blue}
+Observable.generate(
+initialState: red, 
+condition: { $0.count < 15 }
+) {
+  $0.count.isMultiple(of: 2) ? $0 + red : $0 + blue
+}
   .subscribe {print($0)}
   .disposed(by: disposeBag)
 ```
@@ -500,7 +518,8 @@ let disposeBag = DisposeBag()
 enum MyError: Error {
    case error
 }
-// 파라미터로 전달된 요소를 방출하는 옵져버블 생성한다. 이렇게 생성된 옵져버블은 모든요소를 방출하고 컴플리티드 방출하고 종료된다. 이전에 쓴거로는 동작을 바꿀수 없다. 옵져버블이 동작하는 방식을 직접 구현하려면 이번에 쓸 create를 쓴다.
+// 파라미터로 전달된 요소를 방출하는 옵져버블 생성한다. 이렇게 생성된 옵져버블은 모든요소를 방출하고 컴플리티드 방출하고 종료된다. 
+// 이전에 쓴거로는 동작을 바꿀수 없다. 옵져버블이 동작하는 방식을 직접 구현하려면 이번에 쓸 create를 쓴다.
 Observable<String>.create { (observer) -> Disposable in
   guard let url = URL(string: "https://www.apple.com") else {
     observer.onError(MyError.error)
@@ -515,7 +534,8 @@ Observable<String>.create { (observer) -> Disposable in
   observer.onNext(html)
   observer.onCompleted()
   
-  observer.onNext("After completed") // 이미 completed가 되어서 이건 방출되지 않는다. 방출하고 싶으면 onCompleted전에 해야한다.
+  observer.onNext("After completed") 
+  // 이미 completed가 되어서 이건 방출되지 않는다. 방출하고 싶으면 onCompleted전에 해야한다.
   
   return Disposables.create()
 }
@@ -573,7 +593,8 @@ Observable.from(fruits)
   .ignoreElements()
   .subscribe {print($0)}
   .disposed(by: disposeBag)
-// ignoreElements() -> param받지않음. 리턴형은 Completable. 이건 트레이치 라고 불리는 특별한 옵져버블이다. 컴플리티드나 에러만 전달하고 넥스트는 무시한다. 작업의 성공과 실패에만 관심이 있을 때 사용한다.
+// ignoreElements() -> param받지않음. 리턴형은 Completable. 이건 트레이치 라고 불리는 특별한 옵져버블이다. 
+// 컴플리티드나 에러만 전달하고 넥스트는 무시한다. 작업의 성공과 실패에만 관심이 있을 때 사용한다.
 // ignoreElements가 필터링 하기 때문에 next가 무시된다.
 ```
 
@@ -609,7 +630,8 @@ Observable.from(numbers)
   .disposed(by: disposeBag)
 
 
-// filter -> 클로져를 파람으로 받는다. 이건 predicate로 사용된다. 여기서 true를 리턴하는 요소가 연산자가 리턴하는 옵져버블에 포함된다.
+// filter -> 클로져를 파람으로 받는다. 이건 predicate로 사용된다. 
+// 여기서 true를 리턴하는 요소가 연산자가 리턴하는 옵져버블에 포함된다.
 ```
 
 
@@ -636,7 +658,8 @@ let disposeBag = DisposeBag()
 let numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
 
-// 클로저를 파람으로 받는다. predicate로 사용되고, 리턴값이 false가 그때부터 요소 방출한다. 그 전까지는 모두 무시한다. (true가 리턴되는 동안 모두 무시) 방출되는 요소가 포함되는 옵져버블을 리턴한다.
+// 클로저를 파람으로 받는다. predicate로 사용되고, 리턴값이 false가 그때부터 요소 방출한다. 그 전까지는 모두 무시한다. 
+// (true가 리턴되는 동안 모두 무시) 방출되는 요소가 포함되는 옵져버블을 리턴한다.
 
 Observable.from(numbers)
   .skipWhile {!$0.isMultiple(of: 2)}
@@ -668,7 +691,9 @@ subject.onNext(2)
 trigger.onNext(3)
 
 subject.onNext(4)
-// 옵져버블타입을 파람으로 받는다. 다른 옵져버블을 받는다. 이 옵져버블이 넥스트이벤트를 전달하기 전까지 원본옵져버블이 방출하는 이벤트를 무시한다. 이런 특징때문에 파라미터로 전달하는 옵져버블을 트리거라고 부르기도 한다.
+// 옵져버블타입을 파람으로 받는다. 다른 옵져버블을 받는다. 
+// 이 옵져버블이 넥스트이벤트를 전달하기 전까지 원본옵져버블이 방출하는 이벤트를 무시한다. 
+// 이런 특징때문에 파라미터로 전달하는 옵져버블을 트리거라고 부르기도 한다.
 // 트리거가 방출 한 후에 서브젝트가 방출을 할 수 있다.  2,4
 ```
 
@@ -694,7 +719,8 @@ Observable.from(numbers)
 let disposeBag = DisposeBag()
 let numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
-// 클로져를 파람으로 받고 predicate로 사용한다. 여기에서 true를 리턴하면 구독자에게 전달한다. 요소를 방출한다. 연산자가 리턴하는 옵져버블은 최종적으로 조건을 만족시키는 요소만 포함된다.
+// 클로져를 파람으로 받고 predicate로 사용한다. 여기에서 true를 리턴하면 구독자에게 전달한다. 요소를 방출한다. 
+// 연산자가 리턴하는 옵져버블은 최종적으로 조건을 만족시키는 요소만 포함된다.
 
 Observable.from(numbers)
   .takeWhile { !$0.isMultiple(of: 2) }
@@ -766,7 +792,9 @@ subject.onError(MyError.error)
 
 // 에러가 전달되면 버퍼에 있는 요소는 전달되지 않고, 에러만 전달된다.
 
-// 정수를 파람으로 받아서 옵져버블을 리턴한다. 리턴되는 옵져버블에는 원본옵져버블이 방출하는 요소중에서 마지막에 방출된 n개의 요소가 포함된다. 이 연산자에서 가장 중요한것은 구독자로 전달되는 시점이 딜레이된다는 것!
+// 정수를 파람으로 받아서 옵져버블을 리턴한다. 
+// 리턴되는 옵져버블에는 원본옵져버블이 방출하는 요소중에서 마지막에 방출된 n개의 요소가 포함된다. 
+// 이 연산자에서 가장 중요한것은 구독자로 전달되는 시점이 딜레이된다는 것!
 ```
 
 
@@ -810,7 +838,10 @@ subject.single()
 subject.onNext(100)
 
 // 새로운 이벤트가 방출되면 바로 구독자에게 전달한다. 하나의 요소가 전달 된 후, 바로 컴플리트가 전달되는건 아니다.
-// 다른 요소가 방출될수도 있으니까 대기한다. 싱글연산자가 리턴하는 옵져버블은 원본 옵져버블에서 컴플리티드 이벤트를 전달 할 때 까지 대기한다. 컴플리티드 이벤트가 전달된 시점에 하나의 요소만 방출된 시점이라면 구독자에게 컴플리티드를 방출하고, 두개이상이라면 구독자에게 에러를 방출한다. 이런식으로 작동하며, 하나의 요소만 방출되는것을 보장한다. 
+// 다른 요소가 방출될수도 있으니까 대기한다. 
+// 싱글연산자가 리턴하는 옵져버블은 원본 옵져버블에서 컴플리티드 이벤트를 전달 할 때 까지 대기한다. 
+// 컴플리티드 이벤트가 전달된 시점에 하나의 요소만 방출된 시점이라면 구독자에게 컴플리티드를 방출하고, 
+// 두개이상이라면 구독자에게 에러를 방출한다. 이런식으로 작동하며, 하나의 요소만 방출되는것을 보장한다. 
 ```
 
 
@@ -828,7 +859,9 @@ Observable.from(numbers)
   .disposed(by: disposeBag)
 
 
-// distinctUntilChanged -> 파라미터가 없다. 원본옵져버블에서 전달되는 두개의 요소를 비교해서 이전요소와 같다면 방출하지 않는다. 즉 앞에꺼랑 비교해서 같으면 무시, 다르면 방출한다. 1,3,2,3,1,5,7
+// distinctUntilChanged -> 파라미터가 없다. 
+// 원본옵져버블에서 전달되는 두개의 요소를 비교해서 이전요소와 같다면 방출하지 않는다. 
+// 즉 앞에꺼랑 비교해서 같으면 무시, 다르면 방출한다. 1,3,2,3,1,5,7
 ```
 
 
@@ -841,7 +874,10 @@ let disposeBag = DisposeBag()
 // 연산자로 전달하는 파람도 동일하다. 하지만 연산의 결과는 다르다.
 
 // debounce -> 두개의 파람을 받는다.
-// 1. 시간을 전달한다. 이시간은 연산자가 넥스트이벤트를 방출할지 결정하는 조건으로 사용된다. 옵져버가 넥스트를 방출한 후, 지정된 시간동안 다른 넥스트이벤트를 방출하지 않는다면, 해당 시점에 가장마지막으로 방출된 넥스트이벤트를 구독자에게 전달한다. 반대로 지정된 시간 이내에 또다른 넥스트가 방출된다면, 타이머를 초기화한다. 이부분을 이해하는게 정말 중요하다.
+// 1. 시간을 전달한다. 이시간은 연산자가 넥스트이벤트를 방출할지 결정하는 조건으로 사용된다. 
+// 옵져버가 넥스트를 방출한 후, 지정된 시간동안 다른 넥스트이벤트를 방출하지 않는다면, 
+// 해당 시점에 가장마지막으로 방출된 넥스트이벤트를 구독자에게 전달한다. 
+// 반대로 지정된 시간 이내에 또다른 넥스트가 방출된다면, 타이머를 초기화한다. 이부분을 이해하는게 정말 중요하다.
 // 2. 타이머를 실행할 스케쥴러를 전달한다.
 
 let buttonTap = Observable<String>.create { observer in
@@ -885,7 +921,8 @@ let disposeBag = DisposeBag()
 // debounce와 throttle은 짧은시간동안 반복적으로 방출되는 이벤트를 제어한다는 공통점이 있다.
 // throttle -> 실제로는 3개의 파람을 받는다. (기본값을 가진 2번째 파람은 생략가능)
 // 1. 반복주기를 전달, 3. 스케쥴러를 전달.
-// 지정된 주기동안 하나의 이벤트만 구독자에게 전달한다. 보통 두번째 파람은 기본값을 사용하는데, 이때는 주기를 엄격하게 지킨다. 항상 지정된 주기마다 하나씩 이벤트를 전달한다.
+// 지정된 주기동안 하나의 이벤트만 구독자에게 전달한다. 보통 두번째 파람은 기본값을 사용하는데, 이때는 주기를 엄격하게 지킨다.
+// 항상 지정된 주기마다 하나씩 이벤트를 전달한다.
 // 반대로 두번째 파람에 false를 주면 반복주기가 경과한 다음, 가장 먼저 방출되는 이벤트를 구독자에게 전달한다.
 
 let buttonTap = Observable<String>.create { observer in
@@ -969,8 +1006,15 @@ Observable<Int>.interval(.seconds(1), scheduler: MainScheduler.instance)
    .throttle(.milliseconds(2500), latest: false, scheduler: MainScheduler.instance)
    .subscribe { print(currentTimeString(), $0) }
    .disposed(by: disposeBag)
-// 구독자로 전달된 첫번째와 2번째를 시간을 비교하면 3초이다. 넥스트이벤트가 방출되고 지정된 주기가 지나고 그 이후에 첫번째로 방출되는 넥스트이벤트를 전달한다. 첫번째 넥스트이벤트는 구독자에게 바로 전달된다. 이어서 원본옵져버블이 1과 2를 방출하고 0.5초후에 주기가 끝나는데 두번째 파람으로 true를 줬다면 마지막에 방출된 넥스트 이벤트가 구독자에게 전달되었겠지만, 이번에는 false라서 원본옵져버블이 새로운 넥스트이벤트를 방출할 때 까지 기다린다. 0.5초뒤 3이라는 넥스트이벤트가 나타다면 3을 구독자에게 전달한다.
-// 지정된 주기동안 하나의 넥스트이벤트만 전달하는건 다르지 않다. 차이는 넥스트이벤트가 구독자로 전달되는 주기이다. true면 주기를 엄격히 지키지만, false라면 지정된 주기를 초과할 수 있다.
+// 구독자로 전달된 첫번째와 2번째를 시간을 비교하면 3초이다. 
+// 넥스트이벤트가 방출되고 지정된 주기가 지나고 그 이후에 첫번째로 방출되는 넥스트이벤트를 전달한다. 
+// 첫번째 넥스트이벤트는 구독자에게 바로 전달된다. 
+// 이어서 원본옵져버블이 1과 2를 방출하고 0.5초후에 주기가 끝나는데 두번째 파람으로 true를 줬다면 
+// 마지막에 방출된 넥스트 이벤트가 구독자에게 전달되었겠지만, 
+// 이번에는 false라서 원본옵져버블이 새로운 넥스트이벤트를 방출할 때 까지 기다린다. 
+// 0.5초뒤 3이라는 넥스트이벤트가 나타다면 3을 구독자에게 전달한다.
+// 지정된 주기동안 하나의 넥스트이벤트만 전달하는건 다르지 않다. 
+// 차이는 넥스트이벤트가 구독자로 전달되는 주기이다. true면 주기를 엄격히 지키지만, false라면 지정된 주기를 초과할 수 있다.
 
 /*
  2021-01-12 01:01:39.227: 2.xcplaygroundpage:74 (__lldb_expr_92) -> subscribed
@@ -1015,7 +1059,8 @@ subject.onNext(2)
 subject.onCompleted()
 
 // toArray -> 파람 없다. 리턴값: 싱글
-// 소스 옵져버블이 방출하는 모든요소를 하나의 배열에 담는다. 소스옵져버블이 더이상 요소를 방출하지 않는 시점이되야 모아둔 배열을 방출한다. completed하면 요소들을 모아둔 배열을 방출한다. 
+// 소스 옵져버블이 방출하는 모든요소를 하나의 배열에 담는다. 
+// 소스옵져버블이 더이상 요소를 방출하지 않는 시점이되야 모아둔 배열을 방출한다. completed하면 요소들을 모아둔 배열을 방출한다. 
 ```
 
 ### map
@@ -1183,4 +1228,114 @@ Observable<Int>.interval(.seconds(1), scheduler: MainScheduler.instance)
   .disposed(by: disposeBag)
 // 버퍼연산자는 첫번째 파람으로 전달한 타임스팬이 경과하면 수집된 항목들을 즉시 방출한다.
 // 두번째 파람으로 지정한 수만큼 수집되지 않아도 즉시방출한다. 
+```
+
+
+### window
+
+```swift
+let disposeBag = DisposeBag()
+
+// window: buffer 연산자처럼 타임스팬과 맥스카운트를 지정해서 원본옵져버블이 방출하는 항목들을 작은단위의 옵져버블로 분해한다.
+// 버퍼연산자는 수집된 항목을 배열형태로 리턴하지만 윈도우는 수집된 항목을 방출하는 옵져버블을 리턴한다.
+// 그래서 리턴된 옵져버블이 뭘 방출하고 언제 완료되는지 이해하는것이 중요하다.
+
+Observable<Int>.interval(.seconds(1), scheduler: MainScheduler.instance)
+  .window(timeSpan: .seconds(5), count: 3, scheduler: MainScheduler.instance)
+  .take(5)
+  .subscribe {
+    print($0)
+    if let observable = $0.element {
+      observable.subscribe { print(" inner: ", $0) }
+        .disposed(by: disposeBag)
+    }
+  }
+  .disposed(by: disposeBag)
+
+
+// 파람은 버퍼와 비슷. 1. 항목을 분해할 시간단위 2. 분해할 최대 항목수 3. 연산자를 실행할 스케쥴러 전달
+// 리턴형이 버퍼와 다르다. 옵져버블을 방출하는 옵져버블을 리턴한다. 이것을 Inner Observable이라고 한다.
+// 이것은 지정된 최대항목수만큼 방출하거나, 지정된 시간이 경과하면 컴플리티드를 전달하고 종료한다.
+// RxSwift.AddRef -> 특별한 형태의 옵져버블 Inner Observable, 이것을 구독할수있다는걸 이해하는거로 충분
+// 시간의 오차로 결과가 상이할 수 있다.
+// 시간이 차지 않아도 maxCount가 차면 바로 방출한다.
+
+/*
+ next(RxSwift.AddRef<Swift.Int>)
+  inner:  next(0)
+  inner:  completed
+ next(RxSwift.AddRef<Swift.Int>)
+  inner:  next(1)
+  inner:  next(2)
+  inner:  next(3)
+  inner:  completed
+ next(RxSwift.AddRef<Swift.Int>)
+  inner:  next(4)
+  inner:  next(5)
+  inner:  completed
+ next(RxSwift.AddRef<Swift.Int>)
+  inner:  next(6)
+  inner:  next(7)
+  inner:  completed
+ next(RxSwift.AddRef<Swift.Int>)
+ completed
+  inner:  next(8)
+  inner:  next(9)
+  inner:  completed
+
+ */
+
+```
+
+
+### groupBy Operator
+
+```swift
+let disposeBag = DisposeBag()
+let words = ["Apple", "Banana", "Orange", "Book", "City", "Axe"]
+
+// 옵져버블이 방출하는 요소를 원하는기준으로 그룹핑할때 사용한다.
+// 파라미터로 클로져를 받고, 클로져는 요소를 파라미터로 받아서 키를 리턴한다.
+// 키의 형식은 Hashable 프로토콜을 채용한 형식으로 한정되어있다.
+// 연산자를 실행하면 클로져에서 동일한 값을 리턴하는 요소끼리 그룹으로 묶이고
+// 그룹에 속한 요소들은 개별 옵져버블을 통해 방출된다.
+// 연산자가 리턴하는 옵져버블은 타입파라미터가 GroupedObservable로 선언되있다.
+// 여기에는 방출하는 요소와 함께 키가 저장되어 있다.
+
+// 문자열 기준으로 그룹핑 해본다.
+
+Observable.from(words)
+  .groupBy { $0.count } // 이러면 키 형태가 Int가 된다. 문자열 길이에 따라 그룹핑
+  .subscribe(onNext: { groupedObservable in
+    print("== \(groupedObservable.key)")
+    groupedObservable.subscribe { print(" \($0)") }
+      .disposed(by: disposeBag)
+  })
+  .disposed(by: disposeBag)
+
+// 그룹바이 연산자를 사용할때는 보통 flatMap와 toArray연산자를 활용해서
+// 그룹핑된 최종결과를 하나의 배열로 방출하도록 구현한다.
+
+Observable.from(words)
+  .groupBy { $0.count }
+  .flatMap { $0.toArray() }
+  .subscribe { print($0) }
+  .disposed(by: disposeBag)
+
+
+// 이번에는 첫번째 문자를 기준으로 그룹핑 해본다.
+
+Observable.from(words)
+  .groupBy { $0.first ?? Character(" ") }
+  .flatMap { $0.toArray() }
+  .subscribe { print($0) }
+  .disposed(by: disposeBag)
+
+// 홀수과 짝수로 나눠보기 도전과제
+Observable.range(start: 1, count: 10)
+  .groupBy { $0 % 2 }
+  .flatMap { $0.toArray() }
+  .subscribe { print($0) }
+  .disposed(by: disposeBag)
+
 ```
